@@ -1,0 +1,11 @@
+pandas
+openai
+streamlit
+plotly
+scipy
+numpy
+yfinance
+alpaca-py
+alpaca-trade-api
+ta
+newsapi-python
