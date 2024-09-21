@@ -1,0 +1,16 @@
+[client]
+showSidebarNavigation = true
+
+[server]
+maxUploadSize = 1000
+
+[theme]
+primaryColor="#0096D7"                # Flow Blue
+backgroundColor="#FFFFFF"             # White
+secondaryBackgroundColor="#005EAA"    # Intermediate Blue-Green
+#secondaryBackgroundColor="#B3E5D7"    # Light Intermediate Color
+textColor="#31333F"                   # Dark Gray
+font="sans serif"
+
+[app]
+title = "FlowTrader"
