@@ -79,20 +79,20 @@ def generate_signals(df):
         # Conditions
         macd_cross_up = df['macd'].iloc[i] > df['macd_signal'].iloc[i] and df['macd'].iloc[i-1] <= df['macd_signal'].iloc[i-1]
         macd_cross_down = df['macd'].iloc[i] < df['macd_signal'].iloc[i] and df['macd'].iloc[i-1] >= df['macd_signal'].iloc[i-1]
-        rsi_oversold = df['rsi'].iloc[i] < 45  # Adjusted threshold
-        rsi_overbought = df['rsi'].iloc[i] > 55  # Adjusted threshold
+        rsi_oversold = df['rsi'].iloc[i] < 30  # Adjusted threshold
+        rsi_overbought = df['rsi'].iloc[i] > 70  # Adjusted threshold
         price_near_lower_band = df['close'].iloc[i] < df['bb_lband'].iloc[i] * 1.01  # Within 1% of lower band
         price_near_upper_band = df['close'].iloc[i] > df['bb_hband'].iloc[i] * 0.99  # Within 1% of upper band
         ma_crossover_buy = (df['ma_short'].iloc[i] > df['ma_long'].iloc[i] and df['ma_short'].iloc[i-1] <= df['ma_long'].iloc[i-1])
         ma_crossover_sell = (df['ma_short'].iloc[i] < df['ma_long'].iloc[i] and df['ma_short'].iloc[i-1] >= df['ma_long'].iloc[i-1])
         # Buy Signal
         buy_conditions = [ma_crossover_buy, macd_cross_up, rsi_oversold, price_near_lower_band]
-        if sum(buy_conditions) >= 2:
+        if sum(buy_conditions) >= 3:
             df.at[df.index[i], 'signal'] = 1  # Buy signal
 
         # Sell Signal
         sell_conditions = [ma_crossover_sell, macd_cross_down, rsi_overbought, price_near_upper_band]
-        if sum(sell_conditions) >= 2:
+        if sum(sell_conditions) >= 3:
             df.at[df.index[i], 'signal'] = -1  # Sell signal
 
     return df
