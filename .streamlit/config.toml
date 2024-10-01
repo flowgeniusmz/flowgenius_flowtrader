@@ -12,5 +12,3 @@ secondaryBackgroundColor="#005EAA"    # Intermediate Blue-Green
 textColor="#31333F"                   # Dark Gray
 font="sans serif"
 
-[app]
-title = "FlowTrader"

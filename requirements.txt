@@ -9,3 +9,16 @@ alpaca-py
 alpaca-trade-api
 ta
 newsapi-python
+pydantic
+beautifulsoup4
+hmmlearn
+vaderSentiment
+urllib3
+user-agents
+random-user-agent
+nltk
+Backtesting
+asyncio
+mplfinance
+nest-asyncio
+pyzt
