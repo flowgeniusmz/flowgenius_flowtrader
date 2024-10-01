@@ -6,10 +6,10 @@ import ta
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
+
 # Function to fetch historical data
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=600)
 def get_historical_data(ticker: str):
     stock_class = AlpacaStock(ticker=ticker)
     stock_historical_df = stock_class.get_historical_bars()
@@ -63,10 +63,14 @@ def compute_indicators(df):
     df['kc_hband'] = kc.keltner_channel_hband()
     df['kc_lband'] = kc.keltner_channel_lband()
     
-
-     # Add moving averages
-    df['ma_short'] = df['close'].rolling(window=5).mean()
-    df['ma_long'] = df['close'].rolling(window=20).mean()
+    # Add moving averages
+    df['ma_short'] = df['close'].rolling(window=10).mean()
+    df['ma_long'] = df['close'].rolling(window=50).mean()
+    
+    # Drop NaN values resulting from indicator calculations
+    df.dropna(inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    
     return df
 
 def generate_signals(df):
@@ -79,72 +83,24 @@ def generate_signals(df):
         # Conditions
         macd_cross_up = df['macd'].iloc[i] > df['macd_signal'].iloc[i] and df['macd'].iloc[i-1] <= df['macd_signal'].iloc[i-1]
         macd_cross_down = df['macd'].iloc[i] < df['macd_signal'].iloc[i] and df['macd'].iloc[i-1] >= df['macd_signal'].iloc[i-1]
-        rsi_oversold = df['rsi'].iloc[i] < 45  # Adjusted threshold
-        rsi_overbought = df['rsi'].iloc[i] > 55  # Adjusted threshold
-        price_near_lower_band = df['close'].iloc[i] < df['bb_lband'].iloc[i] * 1.01  # Within 1% of lower band
-        price_near_upper_band = df['close'].iloc[i] > df['bb_hband'].iloc[i] * 0.99  # Within 1% of upper band
+        rsi_oversold = df['rsi'].iloc[i] < 30  # Standard threshold
+        rsi_overbought = df['rsi'].iloc[i] > 70  # Standard threshold
+        price_below_lower_band = df['close'].iloc[i] < df['bb_lband'].iloc[i]
+        price_above_upper_band = df['close'].iloc[i] > df['bb_hband'].iloc[i]
         ma_crossover_buy = (df['ma_short'].iloc[i] > df['ma_long'].iloc[i] and df['ma_short'].iloc[i-1] <= df['ma_long'].iloc[i-1])
         ma_crossover_sell = (df['ma_short'].iloc[i] < df['ma_long'].iloc[i] and df['ma_short'].iloc[i-1] >= df['ma_long'].iloc[i-1])
+        
         # Buy Signal
-        buy_conditions = [ma_crossover_buy, macd_cross_up, rsi_oversold, price_near_lower_band]
-        if sum(buy_conditions) >= 2:
+        buy_conditions = [ma_crossover_buy, macd_cross_up, rsi_oversold, price_below_lower_band]
+        if sum(buy_conditions) >= 3:
             df.at[df.index[i], 'signal'] = 1  # Buy signal
 
         # Sell Signal
-        sell_conditions = [ma_crossover_sell, macd_cross_down, rsi_overbought, price_near_upper_band]
-        if sum(sell_conditions) >= 2:
+        sell_conditions = [ma_crossover_sell, macd_cross_down, rsi_overbought, price_above_upper_band]
+        if sum(sell_conditions) >= 3:
             df.at[df.index[i], 'signal'] = -1  # Sell signal
 
     return df
-
-# def plot_chart_with_signals(df):
-#     # Create subplots
-#     fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
-#                         vertical_spacing=0.02, subplot_titles=('OHLC', 'MACD', 'RSI'),
-#                         row_width=[0.2, 0.2, 0.6])
-
-#     # Add OHLC chart
-#     fig.add_trace(go.Candlestick(x=df['timestamp'],
-#                                  open=df['open'],
-#                                  high=df['high'],
-#                                  low=df['low'],
-#                                  close=df['close'],
-#                                  name='OHLC'), row=1, col=1)
-
-#     # Add buy/sell signals on OHLC chart
-#     buy_signals = df[df['signal'] == 1]
-#     sell_signals = df[df['signal'] == -1]
-#     fig.add_trace(go.Scatter(x=buy_signals['timestamp'],
-#                              y=buy_signals['close'],
-#                              mode='markers',
-#                              marker_symbol='triangle-up',
-#                              marker_color='green',
-#                              marker_size=10,
-#                              name='Buy Signal'), row=1, col=1)
-#     fig.add_trace(go.Scatter(x=sell_signals['timestamp'],
-#                              y=sell_signals['close'],
-#                              mode='markers',
-#                              marker_symbol='triangle-down',
-#                              marker_color='red',
-#                              marker_size=10,
-#                              name='Sell Signal'), row=1, col=1)
-
-#     # Add MACD
-#     fig.add_trace(go.Scatter(x=df['timestamp'], y=df['macd'], name='MACD'), row=2, col=1)
-#     fig.add_trace(go.Scatter(x=df['timestamp'], y=df['macd_signal'], name='Signal Line'), row=2, col=1)
-
-#     # Add RSI
-#     fig.add_trace(go.Scatter(x=df['timestamp'], y=df['rsi'], name='RSI'), row=3, col=1)
-#     fig.add_hline(y=70, line_dash='dash', row=3, col=1)
-#     fig.add_hline(y=30, line_dash='dash', row=3, col=1)
-
-#     # Update layout
-#     fig.update_layout(title='Stock Price with Buy/Sell Signals and Indicators',
-#                       xaxis_title='Time',
-#                       yaxis_title='Price',
-#                       height=900)
-
-#     st.plotly_chart(fig)
 
 def plot_chart_with_signals(df):
     from plotly.subplots import make_subplots
@@ -217,7 +173,7 @@ def plot_chart_with_signals(df):
     ), row=2, col=1)
     fig.add_trace(go.Bar(
         x=df['timestamp'],
-        y=df['macd'] - df['macd_signal'],
+        y=df['macd_diff'],
         name='MACD Histogram'
     ), row=2, col=1)
 
@@ -242,7 +198,6 @@ def plot_chart_with_signals(df):
 
     st.plotly_chart(fig)
 
-    
 # Initialize session state variables for historical and streaming data
 if "historical_stock_data" not in st.session_state:
     st.session_state.historical_stock_data = get_historical_data(ticker="GME")
@@ -252,7 +207,7 @@ if "historical_stock_data" not in st.session_state:
 if "streaming_stock_data" not in st.session_state:
     st.session_state.streaming_stock_data = st.session_state.historical_stock_data.copy()
 
-# Fragment function to continuously update streaming data every 1 second
+# Fragment function to continuously update streaming data every 30 seconds
 @st.fragment(run_every="30s")
 def update_streaming_data():
     latest_data = get_latest_data(ticker="GME")
