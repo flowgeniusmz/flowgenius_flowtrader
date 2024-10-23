@@ -236,8 +236,8 @@ def plot_chart_with_signals(df):
     fig.update_layout(
         title='Stock Price with Buy/Sell Signals and Indicators',
         xaxis_title='Time',
-        height=900,
-        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1)
+        height=900, 
+        legend=dict(orientation="v", yanchor="bottom", y=1, xanchor="right", x=1)
     )
 
     st.plotly_chart(fig)
@@ -245,17 +245,17 @@ def plot_chart_with_signals(df):
     
 # Initialize session state variables for historical and streaming data
 if "historical_stock_data" not in st.session_state:
-    st.session_state.historical_stock_data = get_historical_data(ticker="GME")
+    st.session_state.historical_stock_data = get_historical_data(ticker="DJT")
     st.session_state.historical_stock_data = compute_indicators(st.session_state.historical_stock_data)
     st.session_state.historical_stock_data = generate_signals(st.session_state.historical_stock_data)
 
 if "streaming_stock_data" not in st.session_state:
     st.session_state.streaming_stock_data = st.session_state.historical_stock_data.copy()
 
-# Fragment function to continuously update streaming data every 1 second
+# FraDJTnt function to continuously update streaming data every 1 second
 @st.fragment(run_every="30s")
 def update_streaming_data():
-    latest_data = get_latest_data(ticker="GME")
+    latest_data = get_latest_data(ticker="DJT")
 
     # Append latest data to the streaming DataFrame in session state
     st.session_state.streaming_stock_data = pd.concat(
@@ -290,5 +290,5 @@ st.write("RSI Max:", st.session_state.streaming_stock_data['rsi'].max())
 st.write("MACD Min:", st.session_state.streaming_stock_data['macd'].min())
 st.write("MACD Max:", st.session_state.streaming_stock_data['macd'].max())
 
-# Run the fragment to start streaming updates
+# Run the fraDJTnt to start streaming updates
 update_streaming_data()
